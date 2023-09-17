@@ -10,17 +10,20 @@ public class PlayerController : MonoBehaviour
      public float speed = 0;
      public TextMeshProUGUI countText;
      public TextMeshProUGUI countLife;
+     public TextMeshProUGUI countTime;
      public GameObject winTextObject;
      public GameObject loseTextObject;
      public GameObject playAgainButtonObject;
 
 
      private int count;
+     private float time;
      private int life;
      private Rigidbody rb;
      private float movementX;
      private float movementY;
      private bool endGame;
+     private bool timeRunning;
 
      // Start is called before the first frame update
      void Start()
@@ -28,23 +31,43 @@ public class PlayerController : MonoBehaviour
           rb = GetComponent<Rigidbody>();
           count = 0;
           life = 5;
+          time = 180;
           endGame = false;
+          timeRunning = true;
 
           SetCountText();
           SetCountLife();
+          SetCountTime();
+
           winTextObject.SetActive(false);
           loseTextObject.SetActive(false);
           playAgainButtonObject.SetActive(false);
      }
 
+     void Update (){
+          if (timeRunning){
+               if (endGame){
+                    playAgainButtonObject.SetActive(true);
+                    timeRunning = false;
+               }
+               else if (time > 0){
+                    time = time - Time.deltaTime;
+               }
+               else {
+                    time = 0;
+                    speed = 0;
+                    timeRunning = false;
+                    loseTextObject.SetActive(true);
+                    playAgainButtonObject.SetActive(true);
+                    endGame = true;
+               }
+               SetCountTime();
+          }
+     }
+
      public void RestartGame ()
      {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-     }
-
-     public void GoToMenu ()
-     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
      }
 
      void OnMove(InputValue movementValue)
@@ -55,11 +78,14 @@ public class PlayerController : MonoBehaviour
           movementY = movementVector.y;
      }
 
+     void SetCountTime(){
+          countTime.text = "You have " + time.ToString("0") + " seconds left!";
+     }
 
      void SetCountText()
      {
           countText.text = "Count: " + count.ToString();
-          if (count >= 10){
+          if (count >= 15){
                winTextObject.SetActive(true);
                playAgainButtonObject.SetActive(true);
                speed = 0;
