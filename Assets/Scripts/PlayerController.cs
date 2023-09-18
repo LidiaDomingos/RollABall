@@ -14,16 +14,26 @@ public class PlayerController : MonoBehaviour
      public GameObject winTextObject;
      public GameObject loseTextObject;
      public GameObject playAgainButtonObject;
-
+     public GameObject player;
+     public AudioSource getCube;
+     public AudioSource loseLife;
+     public AudioSource gameOver;
+     public AudioSource win;
 
      private int count;
      private float time;
+     private float immortalDuration = 1.0f; 
+     private float blinkInterval = 0.2f; 
+     private float blinkTimer = 0.0f; 
+     private bool immortal;
+
      private int life;
      private Rigidbody rb;
      private float movementX;
      private float movementY;
      private bool endGame;
      private bool timeRunning;
+
 
      // Start is called before the first frame update
      void Start()
@@ -34,6 +44,7 @@ public class PlayerController : MonoBehaviour
           time = 180;
           endGame = false;
           timeRunning = true;
+          immortal = false;
 
           SetCountText();
           SetCountLife();
@@ -63,6 +74,15 @@ public class PlayerController : MonoBehaviour
                }
                SetCountTime();
           }
+
+          if (player.transform.position.y < -2.5){
+               life = life - 1;
+               loseLife.Play();
+               SetCountLife();
+
+               player.transform.position = new Vector3(-8, 1 , -8);
+          }
+
      }
 
      public void RestartGame ()
@@ -79,13 +99,14 @@ public class PlayerController : MonoBehaviour
      }
 
      void SetCountTime(){
-          countTime.text = "You have " + time.ToString("0") + " seconds left!";
+          countTime.text = time.ToString("0") + " : 15 ";
      }
 
      void SetCountText()
      {
-          countText.text = "Count: " + count.ToString();
+          countText.text = " x " + count.ToString();
           if (count >= 15){
+               win.Play();
                winTextObject.SetActive(true);
                playAgainButtonObject.SetActive(true);
                speed = 0;
@@ -95,8 +116,9 @@ public class PlayerController : MonoBehaviour
 
      void SetCountLife()
      {
-          countLife.text = "Life: " + life.ToString();
+          countLife.text = " x " + life.ToString();
           if (life == 0){
+               gameOver.Play();
                loseTextObject.SetActive(true);
                playAgainButtonObject.SetActive(true);
                speed = 0;
@@ -115,6 +137,7 @@ public class PlayerController : MonoBehaviour
           if(other.gameObject.CompareTag("PickUp"))
           {
                other.gameObject.SetActive(false);
+               getCube.Play();
                count = count + 1;
 
                SetCountText();
@@ -122,17 +145,31 @@ public class PlayerController : MonoBehaviour
 
           }
      }
+     
+     private IEnumerator DisableImmortality()
+     {
+          while (blinkTimer < immortalDuration)
+          {
+               yield return new WaitForSeconds(blinkInterval);
+               blinkTimer += blinkInterval;
+          }
+
+          immortal=false;
+     }
 
      private void OnCollisionEnter(Collision other)
      {
           if(other.gameObject.CompareTag("Block"))
           {
-               if (endGame == false){
+               if (!endGame && !immortal ){
+                    loseLife.Play();
+                    blinkTimer = 0.0f;
+                    immortal = true;
+                    StartCoroutine(DisableImmortality());
                     life = life - 1;
                     SetCountLife();
                }
                
-
           }
      }
 
